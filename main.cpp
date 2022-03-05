@@ -3,9 +3,9 @@
 using namespace Todo;
 
 int main() {
-    todo testObj;
-    Time objTime = testObj.getTime();
-    objTime.dumpToTerminal();
+  todo testObj;
+  Time objTime = testObj.getTime();
+  objTime.dumpToTerminal();
 
-    return 0;
+  return 0;
 }
