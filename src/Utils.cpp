@@ -1,14 +1,8 @@
-#include "todo.hpp"
+#include "Utils.hpp"
 
-#include <ctime>
+#include <cstdlib>
 
-namespace Todo {
-todo::todo() {
-  time_t t = time(NULL);
-  std::string timeStr = std::ctime(&t);
-  LOG_INFO("%d || %s", 345678, timeStr.c_str());
-  currentTime = new Time(timeStr);
-}
+namespace todo {
 std::vector<std::string> getTocken(std::string inString, const char delim) {
   std::vector<std::string> outArr;
   for (uint32_t i = 0; i < inString.size();) {
@@ -20,9 +14,10 @@ std::vector<std::string> getTocken(std::string inString, const char delim) {
     while (inString[i] == delim) {
       ++i;
     }
-    LOG_INFO("%s", tmp.c_str());
+    // LOG_INFO("%s", tmp.c_str());
     outArr.push_back(tmp);
   }
   return outArr;
 }
-}  // namespace Todo
+
+}  // namespace todo

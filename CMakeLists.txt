@@ -9,6 +9,5 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_definitions(-DDEBUG)
 endif()
 
-add_executable(test_app main.cpp todo.cpp )
-
-include_directories(./)
+include_directories(include)
+add_executable(test_app src/main.cpp src/todo.cpp src/Utils.cpp)

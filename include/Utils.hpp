@@ -1,15 +1,30 @@
 #pragma once
 
+#include <sys/types.h>
+
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "ErrorCode.hpp"
-namespace Todo {
 
+namespace todo {
 enum eDay { Mon, Tue, Wed, Thu, Fri, Sat, Sun };
 enum eMonth { Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec };
+enum TaskState { TODO, OPEN, DONE };
+enum TaskPriority { LOW, MEDIUM, HIGH, URGENT };
+
+typedef uint64_t Hash;
+
+std::vector<std::string> getTocken(std::string inString,
+                                   const char delim = ' ');
+struct timeComparator {
+  bool operator()(const uint64_t& a, const uint64_t& b) {
+    return (a / 10) < (b / 10);
+  }
+};
 
 class Day {
  private:
@@ -18,9 +33,9 @@ class Day {
  public:
   Day() { day = Mon; }
   Day(std::string dayStr) { *(this) = dayStr; }
+  Day(const uint8_t a) { day = eDay(a - 1); }
   ~Day(){};
-
-  int get() { return day; }
+  int get() { return day + 1; }
   void operator=(const std::string inStr) {
     switch (inStr[0]) {
       case 'M':
@@ -74,9 +89,13 @@ class Month {
 
  public:
   Month() { month = Jan; }
+  Month(uint8_t a) { month = eMonth(a - 1); }
   Month(const std::string inStr) { *(this) = inStr; }
   ~Month(){};
-  int get() { return month; }
+  int get() { return month + 1; }
+  // void operator=(const uint8_t a) {
+  //   month = eMonth(a-1);
+  // }
   void operator=(const std::string inStr) {
     LOG_INFO("%s", inStr.c_str());
     switch (inStr[0]) {
@@ -138,8 +157,6 @@ class Month {
   }
 };
 
-std::vector<std::string> getTocken(std::string inString,
-                                   const char delim = ' ');
 class Time {
  private:
   uint32_t year;
@@ -150,13 +167,28 @@ class Time {
 
  public:
   void dumpToTerminal() {
-    std::printf(
-        "\nyear: %d,\nmonth: %d,\nday: %d,\nweekDay: %d,\nhh::mm::ss: "
-        "%d::%d::%d\n",
-        this->year, this->month.get(), this->day, this->weekDay.get(), this->hh,
-        this->mm, this->ss);
+    // YYYYMMDDWHHMMSS
+    printf("%d %d %d %d %d %d %d\n", this->year, this->month.get(), this->day,
+           this->weekDay.get(), this->hh, this->mm, this->ss);
   }
   ~Time(){};
+  Time(uint8_t DD, uint8_t MM, uint16_t YYYY, uint8_t hh, uint8_t mm,
+       uint8_t ss = 0) {
+    day = DD;
+    month = MM;
+    year = YYYY;
+    this->hh = hh;
+    this->mm = mm;
+    this->ss = ss;
+    updateWeekDay();
+  }
+  void updateWeekDay() {
+    static int tempYear[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+    int m = month.get();
+    int y = year - (m < 3);
+    int w = (y + y / 4 - y / 100 + y / 400 + tempYear[m - 1] + day) % 7;
+    weekDay = w;
+  }
   Time(std::string inString) {
     // inString format: <weekday> <mon> <day> <HH:MM:SS> <year>
     std::vector<std::string> split1 = getTocken(inString);
@@ -172,15 +204,35 @@ class Time {
     year = std::stoi(split1[4]);
   }
   Time(){};
+  uint64_t getHash() {
+    // Generate the formate
+    uint64_t hashValue = 0;
+
+    hashValue += year;
+
+    hashValue *= 100;
+    hashValue += month.get();
+
+    hashValue *= 100;
+    hashValue += day;
+
+    hashValue *= 100;
+    hashValue += hh;
+
+    hashValue *= 100;
+    hashValue += mm;
+
+    hashValue *= 100;
+    hashValue += ss;
+
+    hashValue *= 10;
+    hashValue += weekDay.get();
+
+    return hashValue;
+  }
   Time& operator=(Time* a) {
-    this->year = a->year;
-    this->month = a->month;
-    this->weekDay = a->weekDay;
-    this->day = a->day;
-    this->hh = a->hh;
-    this->mm = a->mm;
-    this->ss = a->ss;
-    return *(this);
+    *(this) = *(a);
+    return *this;
   }
   Time& operator=(Time& a) {
     this->year = a.year;
@@ -194,4 +246,4 @@ class Time {
   }
 };
 
-}  // namespace Todo
+}  // namespace todo
