@@ -8,8 +8,8 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
-#include <list>
 #include <map>
+#include <memory>
 #include <ostream>
 #include <string>
 
@@ -29,7 +29,15 @@ class Task {
     }
     idList.push_back(Id);
   }
-  ~Task(){};
+  ~Task() {
+    auto t = std::find(idList.begin(), idList.end(), id);
+    if (t != idList.end()) {
+      LOG_INFO("Erase %d from idList", id);
+      idList.erase(t);
+    } else {
+      LOG_INFO("Did not update idList.");
+    }
+  };
   std::string getTitle() { return title; }
   std::string getDisc() { return disc; }
   uint32_t getId() { return id; }
@@ -39,30 +47,17 @@ class Task {
   void setDisc(const std::string taskDisc) { this->disc = taskDisc; }
 
   friend std::ostream& operator<<(std::ostream& os, const Task& a) {
-    static bool list = false;
     os << a.title << " TITLE_E\n"
        << a.disc << " DISC_E\n"
        << a.state << ' ' << a.prio << '\n';
     return os;
   }
-  // friend std::istream& operator>>(std::istream& is, Task& a) {
-  //   is >> a.id;
-  //   idList.push_back(a.id);
-  //   is >> a.title;
-  //   is >> a.disc;
-  //   uint32_t state, prio;
-  //   is >> state;
-  //   is >> prio;
-  //   a.state = TaskState(state);
-  //   a.prio = TaskPriority(prio);
-  //   return is;
-  // }
 
  private:
-  static std::list<uint32_t> idList;
-  std::string disc;
-  std::string title;
+  static std::vector<uint32_t> idList;
   uint32_t id;
+  std::string title;
+  std::string disc;
   TaskState state;
   TaskPriority prio;
 };
@@ -72,7 +67,8 @@ class Todo {
   Todo();
   ~Todo() { todoFile.close(); }
 
-  void dumpTasks();
+  void dumpToFile();
+  void dumpToLog();
   void loadFile();
   void addTask(Hash taskHash, std::string title, std::string disc = "",
                TaskState state = TODO, TaskPriority prio = MEDIUM);
@@ -92,8 +88,9 @@ class Todo {
   std::string filePath;
   std::fstream todoFile;
   Time currentTime;
-  std::map<Hash, std::vector<Task>, timeComparator> taskMap;
+  std::map<Hash, std::vector<std::weak_ptr<Task>>, timeComparator> taskMap;
   std::map<uint32_t, uint64_t> taskIDToTimeHash;
+  std::vector<std::shared_ptr<Task>> taskList;
 };
 
 }  // namespace todo

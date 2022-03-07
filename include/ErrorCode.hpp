@@ -6,7 +6,7 @@
   #define LOGE(...)                 \
     do {                            \
       fprintf(stderr, __VA_ARGS__); \
-      exit(1);                      \
+      exit(-1);                     \
     } while (0)
   #define LOG_ERROR(code, msg)                                               \
     LOGE("\n<Kaboom!!> %s [%d]: ERROR %d -- %s\n", __FILE__, __LINE__, code, \
